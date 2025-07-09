@@ -1,0 +1,67 @@
+{
+  "levels": [
+    {
+      "levelName": "STAGE 1",
+      "targetNumber": 1,
+      "letters": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "operators": ["*", "-", "*", "-", "*", "/", "+", "+", "/", "+"],
+      "numbers": [4, 11, 5, 8, 2, 6, 8, 12, 11, 5]
+      
+    },
+    {
+      "levelName": "STAGE 2", 
+      "targetNumber": 5,
+      "letters": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "operators": ["*", "-", "/", "/", "*", "*", "+", "-", "+", "+"],
+      "numbers": [9, 4, 3, 8, 15, 8, 12, 7, 9, 2]
+      
+    },
+    {
+      "levelName": "STAGE 3",
+      "targetNumber": 15,
+      "letters": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "operators": ["-", "*", "/", "+", "-", "+", "-", "/", "*", "+"],
+      "numbers": [3, 4, 10, 3, 20, 14, 19, 16, 14, 13]
+      
+    },
+    {
+      "levelName": "STAGE 4",
+      "targetNumber": 2,
+      "letters": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "operators": ["*", "-", "-", "/", "/", "+", "*", "+", "/", "-"],
+      "numbers": [2, 8, 16, 8, 10, 4, 12, 10, 15, 19]
+      
+    },
+    {
+      "levelName": "STAGE 5",
+      "targetNumber": 6,
+      "letters": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "operators": ["-", "*", "/", "-", "*", "-", "/", "+", "-", "+"],
+      "numbers": [6, 20, 14, 4, 12, 17, 8, 2, 9, 14]
+      
+    },
+    {
+      "levelName": "STAGE 6",
+      "targetNumber": 16,
+      "letters": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "operators": ["*", "+", "+", "-", "/", "-", "*", "-", "/", "/"],
+      "numbers": [7, 12, 20, 4, 10, 16, 13, 6, 19, 12]
+    },
+    {
+      "levelName": "STAGE 7",
+      "targetNumber": 0,
+      "letters": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "operators": ["-", "/", "/", "-", "+", "/", "*", "*", "+", "-"],
+      "numbers": [6, 3, 5, 11, 5, 4, 10, 20, 14, 2]
+      
+    },
+    {
+      "levelName": "STAGE 8",
+      "targetNumber": 37,
+      "letters": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "operators": ["/", "*", "-", "+", "/", "*", "-", "+", "-", "*"],
+      "numbers": [8, 15, 12, 7, 9, 6, 5, 18, 18, 11]
+      
+    }
+  ]
+}
