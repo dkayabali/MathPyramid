@@ -284,15 +284,21 @@ public class LevelManager : MonoBehaviour
         // Önce çarpma ve bölme işlemlerini yap
         for (int i = 0; i < operators.Count; i++)
         {
-            if (operators[i] == '*' || operators[i] == '/')
+            char op = operators[i];
+            
+            // Görsel sembolleri hesaplama sembollerine çevir
+            if (op == 'x') op = '*';
+            if (op == '÷') op = '/';
+            
+            if (op == '*' || op == '/')
             {
                 float operationResult = 0;
 
-                if (operators[i] == '*')
+                if (op == '*')
                 {
                     operationResult = numbers[i] * numbers[i + 1];
                 }
-                else if (operators[i] == '/' && numbers[i + 1] != 0)
+                else if (op == '/' && numbers[i + 1] != 0)
                 {
                     operationResult = numbers[i] / numbers[i + 1];
                 }
@@ -348,15 +354,21 @@ public class LevelManager : MonoBehaviour
         // Önce çarpma ve bölme işlemlerini yap
         for (int i = 0; i < operators.Count; i++)
         {
-            if (operators[i] == '*' || operators[i] == '/')
+            char op = operators[i];
+            
+            // Görsel sembolleri hesaplama sembollerine çevir
+            if (op == 'x') op = '*';
+            if (op == '÷') op = '/';
+            
+            if (op == '*' || op == '/')
             {
                 float operationResult = 0;
 
-                if (operators[i] == '*')
+                if (op == '*')
                 {
                     operationResult = numbers[i] * numbers[i + 1];
                 }
-                else if (operators[i] == '/' && numbers[i + 1] != 0)
+                else if (op == '/' && numbers[i + 1] != 0)
                 {
                     operationResult = numbers[i] / numbers[i + 1];
                 }

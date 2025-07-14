@@ -57,7 +57,17 @@ public class HexagonController : MonoBehaviour, IPointerClickHandler, IPointerEn
             letterText.text = data.letter;
             
         if (operationText != null)
-            operationText.text = data.operation;
+        {
+            string operation = data.operation;
+            
+            // x işaretini küçült
+            if (operation.Contains("x"))
+            {
+                operation = operation.Replace("x", "<size=80%>x</size>");
+            }
+            
+            operationText.text = operation;
+        }
             
         if (hexagonImage != null)
             hexagonImage.color = normalColor;
