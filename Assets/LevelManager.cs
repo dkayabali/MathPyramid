@@ -28,6 +28,8 @@ public class LevelManager : MonoBehaviour
     public TextMeshProUGUI targetNumberText;
     public TextMeshProUGUI levelText;
     public TextMeshProUGUI formulaText;
+    public Transform historyPanel; // Yeni: Geçmiş işlemler paneli
+    public GameObject historyItemPrefab; // Tek bir history item prefab'ı
     public Button resetButton;
     public Button nextLevelButton;
 
@@ -47,6 +49,10 @@ public class LevelManager : MonoBehaviour
     private List<HexagonController> hexagonControllers = new List<HexagonController>();
     private List<HexagonController> selectedHexagons = new List<HexagonController>();
     private bool gameCompleted = false;
+
+    // Formula History
+    private List<string> formulaHistory = new List<string>();
+    private const int maxHistoryCount = 3;
 
     // Pyramid positions (1-2-3-4 layout, A üstte J sol altta)
     private Vector2[] pyramidPositions = new Vector2[]
@@ -115,6 +121,10 @@ public class LevelManager : MonoBehaviour
         // Reset game state
         selectedHexagons.Clear();
         gameCompleted = false;
+
+        // Clear formula history
+        formulaHistory.Clear();
+        ClearHistoryPanel();
 
         // Get level data from JSON
         currentLevelData = levelsData.levels[levelIndex];
@@ -239,6 +249,38 @@ public class LevelManager : MonoBehaviour
         formulaText.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f, 5, 0.5f);
     }
 
+    void ClearHistoryPanel()
+    {
+        if (historyPanel == null) return;
+
+        // Paneldeki tüm çocukları sil
+        foreach (Transform child in historyPanel)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
+    void AddHistoryItem(string formula)
+    {
+        if (historyPanel == null || historyItemPrefab == null) return;
+
+        // Yeni history item oluştur
+        GameObject historyItem = Instantiate(historyItemPrefab, historyPanel);
+
+        // Text component'ini bul ve ayarla
+        TextMeshProUGUI itemText = historyItem.GetComponent<TextMeshProUGUI>();
+        if (itemText != null)
+        {
+            itemText.text = formula + " ✗";
+            itemText.color = Color.red;
+        }
+
+        // Giriş animasyonu
+        historyItem.transform.localScale = Vector3.zero;
+        historyItem.transform.DOScale(Vector3.one, 0.3f)
+            .SetEase(Ease.OutBack);
+    }
+
     void CalculateFormula()
     {
         if (selectedHexagons.Count != maxMoves) return;
@@ -261,6 +303,31 @@ public class LevelManager : MonoBehaviour
 
         // Formüla animasyonu
         formulaText.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 8, 0.7f);
+
+        // 2 saniye sonra otomatik reset
+        DOVirtual.DelayedCall(2f, () => {
+            AutoResetHexagons();
+        });
+    }
+
+    void AutoResetHexagons()
+    {
+        // Sadece kullanılmış hexagonları resetle
+        foreach (var hexagon in hexagonControllers)
+        {
+            if (hexagon != null && hexagon.IsUsed())
+            {
+                hexagon.SetUsed(false);
+
+                // Reset animasyonu
+                hexagon.transform.DOPunchScale(Vector3.one * 0.1f, 0.3f, 5, 0.5f);
+            }
+        }
+
+        // Formula text'i resetle
+        UpdateFormulaDisplay();
+
+        Debug.Log("🔄 Hexagonlar otomatik resetlendi!");
     }
 
     int CalculateFormulaResult()
@@ -285,11 +352,11 @@ public class LevelManager : MonoBehaviour
         for (int i = 0; i < operators.Count; i++)
         {
             char op = operators[i];
-            
+
             // Görsel sembolleri hesaplama sembollerine çevir
             if (op == 'x') op = '*';
             if (op == '÷') op = '/';
-            
+
             if (op == '*' || op == '/')
             {
                 float operationResult = 0;
@@ -355,11 +422,11 @@ public class LevelManager : MonoBehaviour
         for (int i = 0; i < operators.Count; i++)
         {
             char op = operators[i];
-            
+
             // Görsel sembolleri hesaplama sembollerine çevir
             if (op == 'x') op = '*';
             if (op == '÷') op = '/';
-            
+
             if (op == '*' || op == '/')
             {
                 float operationResult = 0;
@@ -404,6 +471,21 @@ public class LevelManager : MonoBehaviour
 
     void CheckWinCondition(int result)
     {
+        // Şu anki formülü al (basit yöntem)
+        string currentFormula = "";
+        for (int i = 0; i < selectedHexagons.Count; i++)
+        {
+            HexagonController hexagon = selectedHexagons[i];
+            if (i == 0)
+                currentFormula += hexagon.GetOperationValue().ToString();
+            else
+                currentFormula += " " + hexagon.GetOperationSymbol() + " " + hexagon.GetOperationValue().ToString();
+        }
+
+        float detailedResult = CalculateDetailedFormulaResult();
+        string resultText = detailedResult % 1 == 0 ? detailedResult.ToString("F0") : detailedResult.ToString("F3");
+        currentFormula += " = " + resultText;
+
         if (result == currentLevelData.targetNumber)
         {
             gameCompleted = true;
@@ -423,7 +505,33 @@ public class LevelManager : MonoBehaviour
         else
         {
             Debug.Log($"❌ Hedef: {currentLevelData.targetNumber}, Sonuç: {result}");
+
+            // Yanlış formülü geçmişe ekle
+            AddFormulaToHistory(currentFormula);
         }
+    }
+
+    void AddFormulaToHistory(string formula)
+    {
+        // Geçmişe ekle
+        formulaHistory.Add(formula);
+
+        // Maximum 3 formül tutulur
+        if (formulaHistory.Count > maxHistoryCount)
+        {
+            formulaHistory.RemoveAt(0); // En eskisini sil
+
+            // Panelden de en eski item'ı sil
+            if (historyPanel != null && historyPanel.childCount > 0)
+            {
+                Transform firstChild = historyPanel.GetChild(0);
+                firstChild.DOScale(Vector3.zero, 0.2f)
+                    .OnComplete(() => Destroy(firstChild.gameObject));
+            }
+        }
+
+        // Yeni item'ı panele ekle
+        AddHistoryItem(formula);
     }
 
     void ShowCongratulations()
