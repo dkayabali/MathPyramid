@@ -117,37 +117,29 @@ public class HexagonController : MonoBehaviour, IPointerClickHandler, IPointerEn
         }
     }
 
+
+
     public void SetUsed(bool used)
     {
         isUsed = used;
 
         if (used)
         {
-            // Kullanıldığında: Gri renk + saydam
-            if (hexagonImage != null)
-            {
-                hexagonImage.DOColor(usedColor, animationDuration);
-            }
-
-            // Saydamlık efekti
-            CanvasGroup canvasGroup = GetComponent<CanvasGroup>();
-            if (canvasGroup == null)
-                canvasGroup = gameObject.AddComponent<CanvasGroup>();
-
-            canvasGroup.DOFade(0.5f, animationDuration);
+            // Kullanıldığında: Seçili rengi koru (yeşil kalsın)
+            // Saydamlık efekti yok - sadece yeşil renkte kalır
         }
         else
         {
             // Reset: Normal duruma dön
-            isSelected = false;
+            isSelected = false; // Seçili durumu temizle
 
             if (hexagonImage != null)
             {
                 hexagonImage.DOKill();
-                hexagonImage.DOColor(normalColor, animationDuration);
+                hexagonImage.DOColor(normalColor, animationDuration); // Normal renge dön
             }
 
-            // Saydamlığı normale dön
+            // Saydamlığı normale dön (eğer varsa)
             CanvasGroup canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup != null)
             {

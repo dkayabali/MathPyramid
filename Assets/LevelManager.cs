@@ -49,6 +49,7 @@ public class LevelManager : MonoBehaviour
     private List<HexagonController> hexagonControllers = new List<HexagonController>();
     private List<HexagonController> selectedHexagons = new List<HexagonController>();
     private bool gameCompleted = false;
+    private bool isResetting = false; // Reset süresi kontrolü
 
     // Formula History
     private List<string> formulaHistory = new List<string>();
@@ -69,6 +70,9 @@ public class LevelManager : MonoBehaviour
 
     void Start()
     {
+        // Otomatik referans bulma
+        FindMissingReferences();
+
         // Load JSON data
         LoadLevelsFromJSON();
 
@@ -84,6 +88,87 @@ public class LevelManager : MonoBehaviour
 
         // Load first level
         LoadLevel(currentLevelIndex);
+    }
+
+    void FindMissingReferences()
+    {
+        // History Panel otomatik bul
+        if (historyPanel == null)
+        {
+            GameObject panel = GameObject.Find("HistoryPanel");
+            if (panel != null)
+            {
+                historyPanel = panel.transform;
+                Debug.Log("✅ HistoryPanel otomatik bulundu!");
+            }
+            else
+            {
+                Debug.LogError("❌ 'HistoryPanel' adında GameObject bulunamadı!");
+            }
+        }
+
+        // History Item Prefab otomatik bul
+        if (historyItemPrefab == null)
+        {
+            // Assets'te HistoryItem prefab'ını ara
+            GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+            foreach (GameObject obj in allObjects)
+            {
+                if (obj.name == "HistoryItem" && obj.scene.name == null) // Prefab kontrolü
+                {
+                    historyItemPrefab = obj;
+                    Debug.Log("✅ HistoryItem prefab otomatik bulundu!");
+                    break;
+                }
+            }
+
+            if (historyItemPrefab == null)
+            {
+                Debug.LogError("❌ 'HistoryItem' prefab bulunamadı!");
+            }
+        }
+
+        // Diğer eksik referansları da kontrol et
+        if (hexagonParent == null)
+        {
+            GameObject parent = GameObject.Find("HexagonParent");
+            if (parent == null) parent = GameObject.Find("HexagonContainer");
+            if (parent != null)
+            {
+                hexagonParent = parent.transform;
+                Debug.Log("✅ HexagonParent otomatik bulundu!");
+            }
+        }
+
+        if (targetNumberText == null)
+        {
+            GameObject target = GameObject.Find("TargetNumberText");
+            if (target != null)
+            {
+                targetNumberText = target.GetComponent<TextMeshProUGUI>();
+                Debug.Log("✅ TargetNumberText otomatik bulundu!");
+            }
+        }
+
+        if (formulaText == null)
+        {
+            GameObject formula = GameObject.Find("FormulaText");
+            if (formula != null)
+            {
+                formulaText = formula.GetComponent<TextMeshProUGUI>();
+                Debug.Log("✅ FormulaText otomatik bulundu!");
+            }
+        }
+
+        if (levelText == null)
+        {
+            GameObject level = GameObject.Find("LevelText");
+            if (level != null)
+            {
+                levelText = level.GetComponent<TextMeshProUGUI>();
+                Debug.Log("✅ LevelText otomatik bulundu!");
+            }
+        }
     }
 
     void LoadLevelsFromJSON()
@@ -121,6 +206,7 @@ public class LevelManager : MonoBehaviour
         // Reset game state
         selectedHexagons.Clear();
         gameCompleted = false;
+        isResetting = false; // Reset durumunu temizle
 
         // Clear formula history
         formulaHistory.Clear();
@@ -173,7 +259,7 @@ public class LevelManager : MonoBehaviour
 
     void OnHexagonClicked(HexagonController hexagon)
     {
-        if (gameCompleted) return;
+        if (gameCompleted || isResetting) return; // Reset süresi kontrolü eklendi
 
         // Eğer hexagon zaten seçiliyse, seçimi kaldır
         if (selectedHexagons.Contains(hexagon))
@@ -239,7 +325,18 @@ public class LevelManager : MonoBehaviour
         if (selectedHexagons.Count == maxMoves)
         {
             float detailedResult = CalculateDetailedFormulaResult();
-            string resultText = detailedResult % 1 == 0 ? detailedResult.ToString("F0") : detailedResult.ToString("F3");
+
+            // Tam sayı mı kontrol et
+            string resultText;
+            if (detailedResult % 1 == 0)
+            {
+                resultText = ((int)detailedResult).ToString(); // Tam sayı: 15
+            }
+            else
+            {
+                resultText = detailedResult.ToString("F3"); // Ondalık: 5.333
+            }
+
             formula += " = " + resultText;
         }
 
@@ -260,19 +357,52 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    void AddHistoryItem(string formula)
+    void AddHistoryItem(string formula, bool isCorrect = false)
     {
-        if (historyPanel == null || historyItemPrefab == null) return;
+        if (historyPanel == null || historyItemPrefab == null)
+        {
+            Debug.LogError("❌ HistoryPanel veya HistoryItemPrefab atanmamış!");
+            return;
+        }
+
+        Debug.Log($"🔧 History item ekleniyor: {formula}");
 
         // Yeni history item oluştur
         GameObject historyItem = Instantiate(historyItemPrefab, historyPanel);
 
-        // Text component'ini bul ve ayarla
-        TextMeshProUGUI itemText = historyItem.GetComponent<TextMeshProUGUI>();
+        // Text component'ini child'da bul (prefab yapısına göre)
+        TextMeshProUGUI itemText = historyItem.GetComponentInChildren<TextMeshProUGUI>();
         if (itemText != null)
         {
-            itemText.text = formula + " ✗";
-            itemText.color = Color.red;
+            itemText.text = formula;  // Sadece formül
+
+            if (isCorrect)
+            {
+                itemText.color = Color.green;  // Yeşil text
+            }
+            else
+            {
+                itemText.color = Color.red;    // Kırmızı text
+            }
+            Debug.Log($"✅ Text ayarlandı: {itemText.text}");
+        }
+        else
+        {
+            Debug.LogError("❌ TextMeshPro component bulunamadı!");
+        }
+
+        // Background color ayarla
+        Image background = historyItem.GetComponent<Image>();
+        if (background != null)
+        {
+            if (isCorrect)
+            {
+                background.color = new Color(0.8f, 1f, 0.8f, 0.3f); // Açık yeşil arka plan
+            }
+            else
+            {
+                background.color = new Color(1f, 0.8f, 0.8f, 0.3f); // Açık kırmızı arka plan
+            }
         }
 
         // Giriş animasyonu
@@ -284,6 +414,9 @@ public class LevelManager : MonoBehaviour
     void CalculateFormula()
     {
         if (selectedHexagons.Count != maxMoves) return;
+
+        // Reset durumunu aktive et
+        isResetting = true;
 
         int result = CalculateFormulaResult();
 
@@ -304,9 +437,10 @@ public class LevelManager : MonoBehaviour
         // Formüla animasyonu
         formulaText.transform.DOPunchScale(Vector3.one * 0.3f, 0.5f, 8, 0.7f);
 
-        // 2 saniye sonra otomatik reset
-        DOVirtual.DelayedCall(2f, () => {
+        // 1 saniye sonra otomatik reset
+        DOVirtual.DelayedCall(1f, () => {
             AutoResetHexagons();
+            isResetting = false; // Reset tamamlandı, tekrar seçime izin ver
         });
     }
 
@@ -332,72 +466,7 @@ public class LevelManager : MonoBehaviour
 
     int CalculateFormulaResult()
     {
-        if (selectedHexagons.Count == 0) return 0;
-
-        // İlk sayı
-        float result = selectedHexagons[0].GetOperationValue();
-
-        // İşlem önceliği kuralları: Önce çarpma ve bölme, sonra toplama ve çıkarma
-        List<float> numbers = new List<float> { result };
-        List<char> operators = new List<char>();
-
-        // Tüm sayıları ve operatörleri topla
-        for (int i = 1; i < selectedHexagons.Count; i++)
-        {
-            operators.Add(selectedHexagons[i].GetOperationSymbol());
-            numbers.Add(selectedHexagons[i].GetOperationValue());
-        }
-
-        // Önce çarpma ve bölme işlemlerini yap
-        for (int i = 0; i < operators.Count; i++)
-        {
-            char op = operators[i];
-
-            // Görsel sembolleri hesaplama sembollerine çevir
-            if (op == 'x') op = '*';
-            if (op == '÷') op = '/';
-
-            if (op == '*' || op == '/')
-            {
-                float operationResult = 0;
-
-                if (op == '*')
-                {
-                    operationResult = numbers[i] * numbers[i + 1];
-                }
-                else if (op == '/' && numbers[i + 1] != 0)
-                {
-                    operationResult = numbers[i] / numbers[i + 1];
-                }
-                else
-                {
-                    operationResult = numbers[i]; // Sıfıra bölme durumunda
-                }
-
-                // Sonucu listeye uygula
-                numbers[i] = operationResult;
-                numbers.RemoveAt(i + 1);
-                operators.RemoveAt(i);
-                i--; // Index'i geri al
-            }
-        }
-
-        // Sonra toplama ve çıkarma işlemlerini yap
-        result = numbers[0];
-        for (int i = 0; i < operators.Count; i++)
-        {
-            if (operators[i] == '+')
-            {
-                result += numbers[i + 1];
-            }
-            else if (operators[i] == '-')
-            {
-                result -= numbers[i + 1];
-            }
-        }
-
-        // Sonucu integer'a çevir (hedef sayılar integer olduğu için)
-        return Mathf.RoundToInt(result);
+        return (int)CalculateDetailedFormulaResult();
     }
 
     float CalculateDetailedFormulaResult()
@@ -482,15 +551,28 @@ public class LevelManager : MonoBehaviour
                 currentFormula += " " + hexagon.GetOperationSymbol() + " " + hexagon.GetOperationValue().ToString();
         }
 
+        // Tam float sonucu al ve formatla
         float detailedResult = CalculateDetailedFormulaResult();
-        string resultText = detailedResult % 1 == 0 ? detailedResult.ToString("F0") : detailedResult.ToString("F3");
+        string resultText;
+        if (detailedResult % 1 == 0)
+        {
+            resultText = ((int)detailedResult).ToString(); // Tam sayı: 15
+        }
+        else
+        {
+            resultText = detailedResult.ToString("F3"); // Ondalık: 5.333
+        }
         currentFormula += " = " + resultText;
 
-        if (result == currentLevelData.targetNumber)
+        // Float karşılaştırma yap
+        if (Mathf.Approximately(detailedResult, currentLevelData.targetNumber))
         {
             gameCompleted = true;
 
             Debug.Log("🎉 Level Complete!");
+
+            // Doğru cevabı panele ekle (yeşil)
+            AddHistoryItem(currentFormula, true);
 
             // Show congratulations
             ShowCongratulations();
@@ -504,9 +586,9 @@ public class LevelManager : MonoBehaviour
         }
         else
         {
-            Debug.Log($"❌ Hedef: {currentLevelData.targetNumber}, Sonuç: {result}");
+            Debug.Log($"❌ Hedef: {currentLevelData.targetNumber}, Sonuç: {detailedResult}");
 
-            // Yanlış formülü geçmişe ekle
+            // Yanlış formülü geçmişe ekle (kırmızı)
             AddFormulaToHistory(currentFormula);
         }
     }
@@ -530,8 +612,8 @@ public class LevelManager : MonoBehaviour
             }
         }
 
-        // Yeni item'ı panele ekle
-        AddHistoryItem(formula);
+        // Yeni item'ı panele ekle (yanlış - kırmızı)
+        AddHistoryItem(formula, false);
     }
 
     void ShowCongratulations()

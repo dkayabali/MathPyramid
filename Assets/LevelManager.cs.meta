@@ -3,7 +3,17 @@ guid: 278a610aaf4754bb7b16a69b836e1720
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - hexagonParent: {instanceID: 0}
+  - hexagonPrefab: {instanceID: 0}
+  - targetNumberText: {instanceID: 0}
+  - levelText: {instanceID: 0}
+  - formulaText: {instanceID: 0}
+  - historyPanel: {instanceID: 0}
+  - historyItemPrefab: {instanceID: 0}
+  - resetButton: {instanceID: 0}
+  - nextLevelButton: {instanceID: 0}
+  - levelsJsonFile: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
